@@ -32,6 +32,6 @@ To understand the system:
 3. Check `99_roadmap.md` for future development plans
 
 ## Related Files
-- `/app.py` - Main Flask application
+- `/app.py` - Main Flask application (includes inline HTML rendering)
 - `/requirements.txt` - Python dependencies
-- `/templates/estimate.html` - HTML template for estimation results
+- `/templates/` - Template directory (currently empty; HTML rendered inline in app.py)

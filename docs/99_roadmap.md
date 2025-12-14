@@ -17,7 +17,7 @@
 - [ ] Input validation and error handling
 - [ ] API authentication and security
 - [ ] Request/response logging
-- [ ] Template-based HTML rendering (Jinja2 templates)
+- [ ] Migrate to Jinja2 template-based HTML rendering (Jinja2 already installed)
 - [ ] Enhanced error messages and user feedback
 
 ### Phase 2: Feature Expansion

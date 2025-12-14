@@ -63,7 +63,23 @@ Environment variables:
 - `CALC_API_BASE`: Base URL for calculation API service
 
 ## Dependencies
-See requirements.txt for Python package dependencies:
+Key application dependencies (see requirements.txt for complete list):
 - Flask 3.1.2: Web framework
 - requests 2.32.5: HTTP client for API calls
 - python-dotenv 1.2.1: Environment variable management
+- Jinja2 3.1.6: Template engine (available but not yet utilized)
+
+All dependencies:
+- blinker 1.9.0
+- certifi 2025.11.12
+- charset-normalizer 3.4.4
+- click 8.3.1
+- Flask 3.1.2
+- idna 3.11
+- itsdangerous 2.2.0
+- Jinja2 3.1.6
+- MarkupSafe 3.0.3
+- python-dotenv 1.2.1
+- requests 2.32.5
+- urllib3 2.6.2
+- Werkzeug 3.1.4
