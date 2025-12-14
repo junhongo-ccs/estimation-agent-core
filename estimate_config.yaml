@@ -1,0 +1,14 @@
+# 見積金額算出の係数設定
+# 環境差分（部門別・年度別）に対応
+
+# 画面あたりの基本単価（円）
+base_cost_per_screen: 120000
+
+# 複雑度別の係数
+difficulty_multipliers:
+  low: 0.8
+  medium: 1.0
+  high: 1.3
+
+# バッファ係数
+buffer_multiplier: 1.1

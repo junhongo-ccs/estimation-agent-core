@@ -1,51 +1,76 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
-import requests
+from flask import Flask, request, jsonify, render_template, make_response
+from logic.estimate import calculate_estimate
 
-load_dotenv()
+load_dotenv(".env")
 
-CALC_API_BASE = os.getenv("CALC_API_BASE", "http://localhost:7071")
-CALC_API_URL = f"{CALC_API_BASE.rstrip('/')}/api/calculate_estimate"
+ALLOWED_COMPLEXITY = {"low", "medium", "high"}
 
 app = Flask(__name__)
 
+@app.get("/")
+def index():
+    return jsonify({
+        "message": "Estimation Agent Core API",
+        "endpoints": ["/health", "/estimate"],
+    }), 200
+
 def render_html(project_name, summary, scope, result):
-    return f"""
-<!doctype html>
-<html lang="ja">
-<head><meta charset="utf-8"><title>見積結果</title></head>
-<body>
-<h1>見積結果</h1>
-<p><b>{project_name}</b></p>
-<p>{summary}</p>
-<p>{scope}</p>
-<hr>
-<ul>
-  <li>画面数: {result.get('screen_count')}</li>
-  <li>難易度: {result.get('complexity')}</li>
-  <li>人日: {result.get('estimate_days')}</li>
-  <li>概算費用: ¥{result.get('estimate_cost'):,}</li>
-</ul>
-
-</body>
-</html>
-"""
-
-@app.post("/estimate")
-def estimate():
-    data = request.get_json() or {}
-    r = requests.post(CALC_API_URL, json={
-        "screen_count": data.get("screen_count", 0),
-        "complexity": data.get("complexity", "medium")
-    })
-    html = render_html(
-        data.get("project_name",""),
-        data.get("summary",""),
-        data.get("scope",""),
-        r.json()
+    return render_template(
+        "estimate.html",
+        project_name=project_name,
+        summary=summary,
+        scope=scope,
+        result=result,
     )
-    return html, 200, {"Content-Type": "text/html"}
+
+@app.get("/health")
+def health():
+    resp = jsonify({"status": "ok"})
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp, 200
+
+def cors_preflight():
+    resp = make_response("", 204)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp
+
+@app.route("/estimate", methods=["POST", "OPTIONS"])
+def estimate():
+    if request.method == "OPTIONS":
+        return cors_preflight()
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        screen_count = int(data.get("screen_count", 0))
+    except Exception:
+        return jsonify({"status": "error", "estimated_amount": 0, "currency": "JPY", "message": "screen_count must be an integer"}), 400
+    if screen_count <= 0:
+        return jsonify({"status": "error", "estimated_amount": 0, "currency": "JPY", "message": "screen_count must be > 0"}), 400
+
+    complexity = (data.get("complexity") or "medium").strip()
+    if complexity not in ALLOWED_COMPLEXITY:
+        return jsonify({"status": "error", "estimated_amount": 0, "currency": "JPY", "message": f"complexity must be one of {sorted(ALLOWED_COMPLEXITY)}"}), 400
+
+    # 見積金額を算出
+    result = calculate_estimate(screen_count, complexity)
+    estimated_amount = result["estimated_amount"]
+    breakdown = result["breakdown"]
+
+    resp = jsonify({
+        "status": "ok",
+        "estimated_amount": estimated_amount,
+        "currency": "JPY",
+        "message": None,
+        "breakdown": breakdown
+    })
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp, 200
 
 if __name__ == "__main__":
     app.run(port=8001, debug=True)
