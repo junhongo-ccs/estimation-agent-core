@@ -29,6 +29,36 @@ DIFFICULTY_MULTIPLIERS = _CONFIG["difficulty_multipliers"]
 BUFFER_MULTIPLIER = _CONFIG["buffer_multiplier"]
 
 
+def build_warnings(screen_count: int) -> list[str]:
+    """
+    画面数に応じた警告メッセージを生成
+
+    Args:
+        screen_count: 画面数
+
+    Returns:
+        警告メッセージのリスト
+    """
+    w = []
+    if screen_count >= 50:
+        w.append("画面数が多いため、要件定義フェーズでの再見積を推奨します")
+    return w
+
+
+def build_assumptions() -> list[str]:
+    """
+    見積の前提条件を返す
+
+    Returns:
+        前提条件のリスト
+    """
+    return [
+        "要件は確定している前提です",
+        "デザインは既存ガイドラインを流用します",
+        "大規模な非機能要件は含みません",
+    ]
+
+
 def calculate_estimate(screen_count: int, complexity: str) -> dict:
     """
     見積金額を算出する
@@ -44,7 +74,10 @@ def calculate_estimate(screen_count: int, complexity: str) -> dict:
                 "base": int,           # 基本金額
                 "difficulty": float,   # 複雑度係数
                 "buffer": float        # バッファ係数
-            }
+            },
+            "config_version": str,     # 設定バージョン
+            "warnings": list[str],     # 警告メッセージ
+            "assumptions": list[str]   # 前提条件
         }
     """
     base = screen_count * BASE_COST_PER_SCREEN
@@ -57,5 +90,8 @@ def calculate_estimate(screen_count: int, complexity: str) -> dict:
             "base": base,
             "difficulty": difficulty,
             "buffer": BUFFER_MULTIPLIER,
-        }
+        },
+        "config_version": _CONFIG.get("config_version", "unknown"),
+        "warnings": build_warnings(screen_count),
+        "assumptions": build_assumptions(),
     }

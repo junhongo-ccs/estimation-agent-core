@@ -162,3 +162,87 @@ class TestEstimateAPI:
         )
         assert response.headers["Access-Control-Allow-Origin"] == "*"
         assert response.headers["Access-Control-Allow-Headers"] == "Content-Type"
+
+
+# v1.2: config_version, warnings, assumptions のテスト
+class TestEstimateAPIV12:
+    """見積API v1.2の新機能テスト"""
+
+    @pytest.fixture
+    def client(self):
+        """Flaskテストクライアント"""
+        app.config["TESTING"] = True
+        with app.test_client() as client:
+            yield client
+
+    def test_config_version_present(self, client):
+        """config_versionフィールドが返る"""
+        response = client.post(
+            "/estimate",
+            json={"screen_count": 10, "complexity": "medium"}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "config_version" in data
+        assert data["config_version"] == "2025-03"
+
+    def test_warnings_empty_for_small_screen_count(self, client):
+        """画面数が少ない場合、warningsは空リスト"""
+        response = client.post(
+            "/estimate",
+            json={"screen_count": 10, "complexity": "medium"}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "warnings" in data
+        assert isinstance(data["warnings"], list)
+        assert len(data["warnings"]) == 0
+
+    def test_warnings_present_for_large_screen_count(self, client):
+        """画面数が50以上の場合、warningsに警告が含まれる"""
+        response = client.post(
+            "/estimate",
+            json={"screen_count": 50, "complexity": "medium"}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "warnings" in data
+        assert isinstance(data["warnings"], list)
+        assert len(data["warnings"]) > 0
+        assert "再見積を推奨" in data["warnings"][0]
+
+    def test_assumptions_always_present(self, client):
+        """assumptionsフィールドが常に返る"""
+        response = client.post(
+            "/estimate",
+            json={"screen_count": 5, "complexity": "low"}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "assumptions" in data
+        assert isinstance(data["assumptions"], list)
+        assert len(data["assumptions"]) == 3
+        assert "要件は確定している前提です" in data["assumptions"]
+        assert "デザインは既存ガイドラインを流用します" in data["assumptions"]
+        assert "大規模な非機能要件は含みません" in data["assumptions"]
+
+    def test_backward_compatibility(self, client):
+        """v1.1の既存フィールドがすべて維持されている"""
+        response = client.post(
+            "/estimate",
+            json={"screen_count": 12, "complexity": "medium"}
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        # v1.0 フィールド
+        assert "status" in data
+        assert "estimated_amount" in data
+        assert "currency" in data
+        assert "message" in data
+        # v1.1 フィールド
+        assert "breakdown" in data
+        # v1.2 フィールド
+        assert "config_version" in data
+        assert "warnings" in data
+        assert "assumptions" in data
+

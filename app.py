@@ -60,13 +60,19 @@ def estimate():
     result = calculate_estimate(screen_count, complexity)
     estimated_amount = result["estimated_amount"]
     breakdown = result["breakdown"]
+    config_version = result["config_version"]
+    warnings = result["warnings"]
+    assumptions = result["assumptions"]
 
     resp = jsonify({
         "status": "ok",
         "estimated_amount": estimated_amount,
         "currency": "JPY",
         "message": None,
-        "breakdown": breakdown
+        "breakdown": breakdown,
+        "config_version": config_version,
+        "warnings": warnings,
+        "assumptions": assumptions,
     })
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
