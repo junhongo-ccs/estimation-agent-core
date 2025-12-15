@@ -1,7 +1,9 @@
 """
 見積APIのテスト
 """
+
 import pytest
+
 from app import app
 from logic.estimate import calculate_estimate
 
@@ -56,10 +58,7 @@ class TestEstimateAPI:
 
     def test_estimate_success(self, client):
         """正常ケース: 12画面, medium"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 12, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 12, "complexity": "medium"})
         assert response.status_code == 200
         data = response.get_json()
         assert data["status"] == "ok"
@@ -74,10 +73,7 @@ class TestEstimateAPI:
 
     def test_estimate_low_complexity(self, client):
         """境界ケース: 1画面, low"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 1, "complexity": "low"}
-        )
+        response = client.post("/estimate", json={"screen_count": 1, "complexity": "low"})
         assert response.status_code == 200
         data = response.get_json()
         assert data["status"] == "ok"
@@ -86,10 +82,7 @@ class TestEstimateAPI:
 
     def test_estimate_high_complexity(self, client):
         """境界ケース: 1画面, high"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 1, "complexity": "high"}
-        )
+        response = client.post("/estimate", json={"screen_count": 1, "complexity": "high"})
         assert response.status_code == 200
         data = response.get_json()
         assert data["status"] == "ok"
@@ -98,10 +91,7 @@ class TestEstimateAPI:
 
     def test_estimate_invalid_screen_count_zero(self, client):
         """不正入力: screen_count = 0"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 0, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 0, "complexity": "medium"})
         assert response.status_code == 400
         data = response.get_json()
         assert data["status"] == "error"
@@ -110,20 +100,14 @@ class TestEstimateAPI:
 
     def test_estimate_invalid_screen_count_negative(self, client):
         """不正入力: screen_count < 0"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": -5, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": -5, "complexity": "medium"})
         assert response.status_code == 400
         data = response.get_json()
         assert data["status"] == "error"
 
     def test_estimate_invalid_complexity(self, client):
         """不正入力: unknown complexity"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 10, "complexity": "unknown"}
-        )
+        response = client.post("/estimate", json={"screen_count": 10, "complexity": "unknown"})
         assert response.status_code == 400
         data = response.get_json()
         assert data["status"] == "error"
@@ -132,10 +116,7 @@ class TestEstimateAPI:
 
     def test_estimate_invalid_screen_count_string(self, client):
         """不正入力: screen_countが文字列"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": "abc", "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": "abc", "complexity": "medium"})
         assert response.status_code == 400
         data = response.get_json()
         assert data["status"] == "error"
@@ -143,10 +124,7 @@ class TestEstimateAPI:
 
     def test_estimate_default_complexity(self, client):
         """complexityを省略した場合はmediumがデフォルト"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 10}
-        )
+        response = client.post("/estimate", json={"screen_count": 10})
         assert response.status_code == 200
         data = response.get_json()
         assert data["status"] == "ok"
@@ -156,10 +134,7 @@ class TestEstimateAPI:
 
     def test_cors_headers(self, client):
         """CORS ヘッダーが正しく設定されている"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 5, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 5, "complexity": "medium"})
         assert response.headers["Access-Control-Allow-Origin"] == "*"
         assert response.headers["Access-Control-Allow-Headers"] == "Content-Type"
 
@@ -177,10 +152,7 @@ class TestEstimateAPIV12:
 
     def test_config_version_present(self, client):
         """config_versionフィールドが返る"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 10, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 10, "complexity": "medium"})
         assert response.status_code == 200
         data = response.get_json()
         assert "config_version" in data
@@ -188,10 +160,7 @@ class TestEstimateAPIV12:
 
     def test_warnings_empty_for_small_screen_count(self, client):
         """画面数が少ない場合、warningsは空リスト"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 10, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 10, "complexity": "medium"})
         assert response.status_code == 200
         data = response.get_json()
         assert "warnings" in data
@@ -200,10 +169,7 @@ class TestEstimateAPIV12:
 
     def test_warnings_present_for_large_screen_count(self, client):
         """画面数が50以上の場合、warningsに警告が含まれる"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 50, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 50, "complexity": "medium"})
         assert response.status_code == 200
         data = response.get_json()
         assert "warnings" in data
@@ -213,10 +179,7 @@ class TestEstimateAPIV12:
 
     def test_assumptions_always_present(self, client):
         """assumptionsフィールドが常に返る"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 5, "complexity": "low"}
-        )
+        response = client.post("/estimate", json={"screen_count": 5, "complexity": "low"})
         assert response.status_code == 200
         data = response.get_json()
         assert "assumptions" in data
@@ -228,10 +191,7 @@ class TestEstimateAPIV12:
 
     def test_backward_compatibility(self, client):
         """v1.1の既存フィールドがすべて維持されている"""
-        response = client.post(
-            "/estimate",
-            json={"screen_count": 12, "complexity": "medium"}
-        )
+        response = client.post("/estimate", json={"screen_count": 12, "complexity": "medium"})
         assert response.status_code == 200
         data = response.get_json()
         # v1.0 フィールド
@@ -245,4 +205,3 @@ class TestEstimateAPIV12:
         assert "config_version" in data
         assert "warnings" in data
         assert "assumptions" in data
-

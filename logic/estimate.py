@@ -1,9 +1,10 @@
 """
 見積金額算出ロジック
 """
-import os
-import yaml
+
 from pathlib import Path
+
+import yaml
 
 
 # 設定ファイルの読み込み
@@ -17,8 +18,8 @@ def _load_config():
             "difficulty_multipliers": {"low": 0.8, "medium": 1.0, "high": 1.3},
             "buffer_multiplier": 1.1,
         }
-    
-    with open(config_path, "r", encoding="utf-8") as f:
+
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -83,7 +84,7 @@ def calculate_estimate(screen_count: int, complexity: str) -> dict:
     base = screen_count * BASE_COST_PER_SCREEN
     difficulty = DIFFICULTY_MULTIPLIERS.get(complexity, 1.0)
     total = base * difficulty * BUFFER_MULTIPLIER
-    
+
     return {
         "estimated_amount": int(total),
         "breakdown": {
