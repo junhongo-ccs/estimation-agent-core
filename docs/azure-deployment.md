@@ -30,10 +30,9 @@
 
 ### 🔍 発見した問題
 
-1. **ZIPデプロイの制限**
-   - `az webapp deploy --type zip` はファイルコピーのみ
-   - ビルドプロセス（pip install）が自動実行されない
-   - `SCM_DO_BUILD_DURING_DEPLOYMENT` はGitデプロイ専用で、ZIPデプロイでは無効
+1. **ZIPデプロイでのOryxビルド未実行**
+   - `az webapp deploy --type zip` でもOryxビルド（pip install）は可能だが、今回はビルド対象を見つけられていない状態
+   - 結果としてファイルコピーのみが実行され、依存関係がインストールされていない
 
 2. **コンテナ起動の失敗**
    - exit code: 3 で繰り返しクラッシュ
@@ -48,59 +47,49 @@
 ### startup.sh による依存関係のインストール
 
 ```bash
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# 依存関係のインストール
-pip install -r requirements.txt
+cd /home/site/wwwroot
 
-# gunicornでアプリケーションを起動
-gunicorn --bind=0.0.0.0:8000 --timeout 600 app:app
+echo "Python: $(python -V || true)"
+echo "Pip: $(python -m pip -V || true)"
+
+python -m pip install --upgrade pip
+python -m pip install --no-cache-dir -r requirements.txt
+
+echo "Starting gunicorn..."
+exec python -m gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout 600 app:app
 ```
 
 **利点**:
 - 確実に依存関係がインストールされる
 - Azure App Service の標準的なアプローチ
+- `python -m pip` / `python -m gunicorn` で環境の取り違えを防止
+- `cd /home/site/wwwroot` で作業ディレクトリを明示
 
 **欠点**:
 - 起動時に毎回 pip install が実行される（初回起動が遅い）
 
+**改善ポイント**:
+- `pip` 直呼びではなく `python -m pip` で同じPython環境を確実に使用
+- `set -euo pipefail` でエラー時の即座停止と未定義変数の検出
+- `exec` でプロセス管理を改善（シグナル処理の最適化）
+
 ## 次のステップ
 
-### 1. startup.sh の改善版
+### 1. デプロイの実行
 
-より堅牢なバージョンに更新することを推奨：
+現在の `startup.sh` は既に改善版が適用されています。以下の手順でデプロイを実行してください。
 
-```bash
-#!/bin/bash
-set -e
-
-echo "Installing dependencies..."
-pip install --no-cache-dir -r /home/site/wwwroot/requirements.txt
-
-echo "Starting application..."
-exec gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=600 app:app
-```
-
-変更点:
-- フルパス指定で確実性向上
-- `--no-cache-dir` でディスク使用量削減
-- `exec` でプロセス管理を改善
-- ワーカー数を2に設定（B1プランに適切）
-
-### 2. デプロイの実行
+### 2. デプロイ手順
 
 ```bash
-# ZIPを正しい構造で作成
+# ZIPを作成（__pycache__を除外）
 cd /workspaces/estimation-agent-core
 rm -f deploy.zip
-zip -r deploy.zip \
-  startup.sh \
-  app.py \
-  requirements.txt \
-  estimate_config.yaml \
-  logic/ \
-  templates/
+zip -r deploy.zip startup.sh app.py requirements.txt estimate_config.yaml logic/ templates/ \
+  -x "**/__pycache__/*" "*.pyc"
 
 # ZIPの構造を確認（startup.shがルート直下にあること）
 unzip -l deploy.zip | head -20
