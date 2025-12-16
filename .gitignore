@@ -1,3 +1,16 @@
 .env
 .venv/
 .ruff_cache/
+
+# Azure deployment files
+deploy.zip
+app-logs.zip
+app-logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
