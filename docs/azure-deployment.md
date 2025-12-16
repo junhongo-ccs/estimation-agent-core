@@ -23,10 +23,33 @@
    - `SCM_DO_BUILD_DURING_DEPLOYMENT=1`
    - `ENABLE_ORYX_BUILD=true`
 
-### ❌ 未完了の作業
+4. **デプロイの実行**
+   - ZIPデプロイ完了（`RuntimeSuccessful`）
+   - アプリ再起動完了
 
-- 最終的なZIPデプロイと動作確認
-- アプリケーションの正常起動確認
+### 📋 TODO: 動作確認（次のステップ）
+
+デプロイは成功しました（`status: RuntimeSuccessful`）。以下のコマンドで最終確認を実行してください：
+
+```bash
+# 30秒待機（startup.shでpip installが実行されるため）
+sleep 30
+
+# ヘルスチェックで動作確認
+curl -i https://estimation-agent-core.azurewebsites.net/health
+```
+
+**期待される結果**: 
+```
+HTTP/1.1 200 OK
+...
+{"status":"ok"}
+```
+
+**確認後のタスク**:
+- [ ] ヘルスチェックが成功したら、このセクションを完了扱いに更新
+- [ ] 必要に応じてログ確認: `az webapp log tail -g rg-jhongo0067-1948 -n estimation-agent-core`
+- [ ] ドキュメントの変更をコミット・プッシュ
 
 ### 🔍 発見した問題
 
